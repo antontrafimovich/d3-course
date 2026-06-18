@@ -11,11 +11,14 @@ const width = 720;
 const height = 360;
 
 const cardWidth = 224;
-const cardHeight = 132;
+const cardHeight = 96;
 const cardPadding = 12;
 const cardContentGap = 12;
 const cardGap = 24;
-const kpiStatusRadius = 24;
+const kpiStatusRadius = 6;
+const mainGroupGap = 24;
+
+const dashboardTitleValue = 'Q1 Business Overview';
 
 const kpis = [
   { label: 'Revenue', value: '$128k', status: 'good' },
@@ -23,27 +26,17 @@ const kpis = [
   { label: 'Conversion', value: '4.7%', status: 'warning' },
 ] satisfies Kpi[];
 
-// prettier-ignore
-const svg = d3
-  .select('#app')
-  .append('svg')
-    .attr('viewBox', `0 0 ${width} ${height}`)
-    .attr('class', 'container')
-    .attr('width', width)
-    .attr('height', height)
-    .style('border', '1px solid black');
-
-const kpiStatusToColorMap: Map<KpiStatus, string> = new Map([
-  ['good', 'green'],
-  ['warning', 'yellow'],
-]);
+const kpiStatusToColorMap: Record<KpiStatus, string> = {
+  good: 'green',
+  warning: 'orange',
+};
 
 // prettier-ignore
-const renderKpiItem = (item: Kpi, left: number) => {
-  const group = svg
+const renderKpiItem = (container: d3.Selection<SVGGElement, unknown, HTMLElement, any>, item: Kpi, left: number, top: number) => {
+  const group = container
     .append('g')
       .classed('kpi-item', true)
-      .style('transform', `translate(${left}px, 0)`);
+      .attr('transform', `translate(${left}, ${top})`);
 
   group
     .append('rect')
@@ -76,31 +69,44 @@ const renderKpiItem = (item: Kpi, left: number) => {
 
   const statusGroup = group
     .append('g')
-      .style('transform', `translate(${cardPadding}px, ${cardPadding + labelHeight + valueHeight + cardContentGap * 2}px)`);
+      .attr('transform', `translate(${cardPadding}, ${cardPadding + labelHeight + valueHeight + cardContentGap * 2})`);
 
-  const color = kpiStatusToColorMap.get(item.status) || 'black';
+  const color = kpiStatusToColorMap[item.status] || 'black';
 
   statusGroup
     .append('circle')
       .attr('r', kpiStatusRadius)
       .attr('cx', kpiStatusRadius)
       .attr('cy', kpiStatusRadius)
-      .attr('stroke', color)
-      .attr('fill', 'transparent')
-
-  const status = statusGroup
-    .append('text')
-      .classed('kpi-item-status', true)
-      .text(item.status === "good" ? 'G' : 'W')
-      .style('fill', color)
-      .attr('y', kpiStatusRadius)
-      .attr('dominant-baseline', 'middle');
-
-  status.attr('x', kpiStatusRadius - (status.node()?.getBBox().width! / 2))
+      .attr('fill', color);
 }
+
+// prettier-ignore
+const svg = d3
+  .select('#app')
+  .append('svg')
+    .attr('viewBox', `0 0 ${width} ${height}`)
+    .attr('class', 'container')
+    .attr('width', width)
+    .attr('height', height)
+    .style('border', '1px solid black');
+
+const mainGroup = svg.append('g');
+
+const dashboardTitle = mainGroup
+  .append('text')
+  .text(dashboardTitleValue)
+  .attr('dominant-baseline', 'hanging');
+
+const dashboardTitleHeight = dashboardTitle.node()?.getBBox().height!;
 
 for (let i = 0; i < kpis.length; i++) {
   let leftMargin = i * cardWidth + i * cardGap;
 
-  renderKpiItem(kpis[i], leftMargin);
+  renderKpiItem(
+    mainGroup,
+    kpis[i],
+    leftMargin,
+    mainGroupGap + dashboardTitleHeight,
+  );
 }
