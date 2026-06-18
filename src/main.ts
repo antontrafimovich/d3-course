@@ -7,18 +7,22 @@ type Kpi = {
   status: KpiStatus;
 };
 
-const width = 720;
+const width = 736;
 const height = 360;
 
 const cardWidth = 224;
 const cardHeight = 96;
 const cardPadding = 12;
 const cardContentGap = 12;
+const cardTextFontSize = 18;
 const cardGap = 24;
 const kpiStatusRadius = 6;
-const mainGroupGap = 24;
 
-const dashboardTitleValue = 'Q1 Business Overview';
+const mainGroupGap = 24;
+const containerPadding = 8;
+const title = 'Q1 Business Overview';
+const titleFontSize = 20;
+
 
 const kpis = [
   { label: 'Revenue', value: '$128k', status: 'good' },
@@ -32,8 +36,30 @@ const kpiStatusToColorMap: Record<KpiStatus, string> = {
 };
 
 // prettier-ignore
-const renderKpiItem = (container: d3.Selection<SVGGElement, unknown, HTMLElement, any>, item: Kpi, left: number, top: number) => {
-  const group = container
+const svg = d3
+  .select('#app')
+  .append('svg')
+    .attr('viewBox', `0 0 ${width} ${height}`)
+    .attr('class', 'container')
+    .attr('width', width)
+    .attr('height', height)
+    .style('border', '1px solid black');
+
+const mainGroup = svg
+  .append('g')
+    .attr('transform', `translate(${containerPadding}, ${containerPadding})`);
+
+mainGroup
+  .append('text')
+    .text(title)
+    .attr('x', 0)
+    .attr('y', 0)
+    .attr('dominant-baseline', 'hanging')
+    .style('font-size', titleFontSize);
+
+// prettier-ignore
+const renderKpiItem = (item: Kpi, left: number, top: number) => {
+  const group = mainGroup
     .append('g')
       .classed('kpi-item', true)
       .attr('transform', `translate(${left}, ${top})`);
@@ -47,29 +73,29 @@ const renderKpiItem = (container: d3.Selection<SVGGElement, unknown, HTMLElement
       .attr('x', 0)
       .attr('y', 0)
 
-  const label = group
+   group
     .append('text')
-        .classed('kpi-item-label', true)
-        .text(`${item.label}:`)
-        .attr('x', cardPadding)
-        .attr('y', cardPadding)
-        .attr('dominant-baseline', 'hanging');
+      .classed('kpi-item-label', true)
+      .text(item.label)
+      .attr('font-size', cardTextFontSize)
+      .attr('x', cardPadding)
+      .attr('y', cardPadding)
+      .attr('dominant-baseline', 'hanging');
 
-  const labelHeight = Math.floor(label.node()?.getBBox().height!);
 
-  const value = group
+  group
     .append('text')
-    .classed('kpi-item-value', true)
-    .text(item.value)
-    .attr('x', cardPadding)
-    .attr('y', cardPadding + labelHeight + cardContentGap)
-    .attr('dominant-baseline', 'hanging');
+      .classed('kpi-item-value', true)
+      .text(item.value)
+      .attr('font-size', cardTextFontSize)
+      .attr('x', cardPadding)
+      .attr('y', cardPadding + cardTextFontSize + cardContentGap)
+      .attr('dominant-baseline', 'hanging');
 
-  const valueHeight = Math.floor(value.node()?.getBBox().height!);
 
   const statusGroup = group
     .append('g')
-      .attr('transform', `translate(${cardPadding}, ${cardPadding + labelHeight + valueHeight + cardContentGap * 2})`);
+      .attr('transform', `translate(${cardPadding}, ${cardPadding + cardTextFontSize * 2 + cardContentGap * 2})`);
 
   const color = kpiStatusToColorMap[item.status] || 'black';
 
@@ -81,32 +107,12 @@ const renderKpiItem = (container: d3.Selection<SVGGElement, unknown, HTMLElement
       .attr('fill', color);
 }
 
-// prettier-ignore
-const svg = d3
-  .select('#app')
-  .append('svg')
-    .attr('viewBox', `0 0 ${width} ${height}`)
-    .attr('class', 'container')
-    .attr('width', width)
-    .attr('height', height)
-    .style('border', '1px solid black');
-
-const mainGroup = svg.append('g');
-
-const dashboardTitle = mainGroup
-  .append('text')
-  .text(dashboardTitleValue)
-  .attr('dominant-baseline', 'hanging');
-
-const dashboardTitleHeight = dashboardTitle.node()?.getBBox().height!;
-
 for (let i = 0; i < kpis.length; i++) {
   let leftMargin = i * cardWidth + i * cardGap;
 
   renderKpiItem(
-    mainGroup,
     kpis[i],
     leftMargin,
-    mainGroupGap + dashboardTitleHeight,
+    mainGroupGap + titleFontSize,
   );
 }
